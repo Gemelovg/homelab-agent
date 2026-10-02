@@ -15,3 +15,14 @@ docker_hosts:
 
 audit_log: audit.jsonl
 max_log_lines: 500
+
+# Investigation agent (phase 2). Effort: low | medium | high | xhigh | max
+agent:
+  model: claude-opus-5-5
+  effort: high
+  max_steps: 15
+
+# Reports are pushed here with --notify. Set NTFY_TOKEN in .env if your server needs auth.
+ntfy:
+  url: http://192.168.1.21:8888
+  topic: homelab-agent

@@ -9,7 +9,7 @@ Built in phases, each covering a skill area:
 | Phase | What | Skill area |
 |---|---|---|
 | 1 ✅ | Read-only **MCP server** for Proxmox + Docker | AI-enabled dev tools |
-| 2 | **Agent loop** on the Claude API: alert → investigate → diagnose → report | Multi-step agent workflows |
+| 2 ✅ | **Agent loop** on the Claude API: alert → investigate → diagnose → report | Multi-step agent workflows |
 | 3 | **Eval harness**: staged incidents, scored diagnoses, prompt versioning | Prompts, evals, context systems |
 | 4 | **Guarded write actions**: validated fixes, approval gate, injection tests | Hardening AI outputs |
 | 5 | Write-up: architecture, eval results, lessons learned | Communicating it |
@@ -31,6 +31,9 @@ Claude Code / agent ──MCP (stdio)──▶ homelab-mcp
   are validated, and the model never supplies URLs.
 - **Secret redaction** on env vars, Proxmox config, health checks and logs (passwords, tokens,
   bearer headers, URL credentials, private keys).
+- **Free-text fields withheld**: the first real run found a plaintext password in a VM's
+  Proxmox notes. Pattern-based redaction can't catch a bare password in prose, so free-text
+  notes are now withheld entirely (regression test in `tests/test_proxmox.py`).
 - **Prompt-injection boundary**: logs are attacker-influenced, so they come back wrapped in
   `<untrusted_data>`, and a payload can't close the wrapper early.
 - **Audit trail**: `audit.jsonl` records every call, its arguments, the outcome and how long it took.
@@ -81,13 +84,50 @@ Then ask things like:
 - "Which storage pool is closest to full, and which guests live on it?"
 - "Did any backups fail this week? Why?"
 
+## Agent (phase 2)
+
+```
+homelab-agent "task" ──▶ agent loop (Claude API, claude-opus-5-5)
+                           │  ▲  tool_use / tool_result
+                           ▼  │
+                         MCP client ──stdio──▶ homelab-mcp (phase 1: same tools, same safety layer)
+                           │
+                           ├─▶ JSON report (schema-enforced, Pydantic-validated)
+                           ├─▶ runs/<timestamp>.json (full transcript, tokens, cost: eval data for phase 3)
+                           └─▶ ntfy push notification
+```
+
+```bash
+uv run homelab-agent --health-check --notify
+uv run homelab-agent "Sonarr isn't grabbing anything. Why?"
+uv run homelab-agent --health-check --effort medium --max-steps 8
+```
+
+Design choices:
+- **The agent is an MCP client of its own server.** Tools, redaction, the untrusted-data
+  wrapper and the audit log live in one place, shared by Claude Code and the agent.
+- **Hand-written tool-use loop**, so step limits, parallel tool execution and per-run
+  accounting are explicit.
+- **Step budget with a graceful landing**: when it runs out, a mid-conversation system
+  message tells the model to report with what it has (tools disabled), so the run never
+  gets cut off without a result.
+- **Structured output**: the API enforces a JSON schema for the final report:
+  `status`, `summary`, and `findings[]` with severity, evidence, root cause, fix and confidence.
+- **Failure handling**: a tool error goes back to the model as an `is_error` result. Refusals,
+  invalid reports and unexpected stop reasons are recorded, never crash the run, and a
+  refusal falls back to another model automatically.
+- **Cost visibility**: token usage (including prompt-cache reads) and dollar cost for every run.
+- **Versioned system prompt** (`agent/prompts.py`): each run records the prompt version
+  for eval comparisons.
+
 ## Roadmap
 
-### Phase 2: agent loop
-- [ ] `agent/` package: Claude API tool-use loop that reuses the same tool functions
-- [ ] Structured output: `{summary, root_cause, evidence[], confidence, proposed_fix}`
-- [ ] Limits: max steps, max tokens, and a cost report per run
-- [ ] Trigger it from Uptime Kuma / Alertmanager webhooks; send the report to ntfy/Discord
+### Phase 2: agent loop ✅
+- [x] Claude API tool-use loop over the MCP server
+- [x] Structured report, step budget, cost tracking, run transcripts
+- [x] ntfy notifications
+- [ ] Scheduled run (cron/systemd timer in the `claude` LXC)
+- [ ] Trigger from Uptime Kuma webhooks
 
 ### Phase 3: evals and context
 - [ ] `evals/scenarios/`: break things on purpose in a test LXC (crash-loop, OOM, full disk,

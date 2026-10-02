@@ -28,11 +28,27 @@ class ProxmoxConfig:
 
 
 @dataclass(frozen=True)
+class AgentConfig:
+    model: str = "claude-opus-5-5"
+    effort: str = "high"
+    max_steps: int = 15
+
+
+@dataclass(frozen=True)
+class NtfyConfig:
+    url: str
+    topic: str
+    token: str | None = None
+
+
+@dataclass(frozen=True)
 class Config:
     proxmox: ProxmoxConfig | None
     docker_hosts: dict[str, str]
     audit_log: Path
     max_log_lines: int = 500
+    agent: AgentConfig = AgentConfig()
+    ntfy: NtfyConfig | None = None
 
 
 def validate_name(value: str, kind: str) -> str:
@@ -71,9 +87,15 @@ def load_config(path: str | Path | None = None) -> Config:
             raise ConfigError(f"docker_hosts.{name}: URL must start with one of {ALLOWED_DOCKER_SCHEMES}")
         docker_hosts[name] = url
 
+    ntfy = None
+    if nt := raw.get("ntfy"):
+        ntfy = NtfyConfig(url=nt["url"].rstrip("/"), topic=nt["topic"], token=os.environ.get("NTFY_TOKEN"))
+
     return Config(
         proxmox=proxmox,
         docker_hosts=docker_hosts,
         audit_log=Path(raw.get("audit_log", "audit.jsonl")),
         max_log_lines=int(raw.get("max_log_lines", 500)),
+        agent=AgentConfig(**(raw.get("agent") or {})),
+        ntfy=ntfy,
     )

@@ -8,6 +8,22 @@ from .safety import redact
 GB = 1024**3
 MB = 1024**2
 
+# Free-text fields where people jot down anything, credentials included. Pattern-based
+# redaction can't recognise a bare password in prose, so these are withheld entirely.
+FREE_TEXT_KEYS = {"description"}
+
+
+def sanitize_guest_config(config: dict) -> dict:
+    out = {}
+    for key, value in config.items():
+        if key == "digest":
+            continue
+        if key in FREE_TEXT_KEYS:
+            out[key] = f"[withheld: free-text notes, {len(str(value))} chars]"
+        else:
+            out[key] = redact(str(value))
+    return out
+
 
 class Proxmox:
     def __init__(self, cfg: ProxmoxConfig):
@@ -48,7 +64,7 @@ class Proxmox:
         config = endpoint.config.get()
         return {
             **match,
-            "config": {k: redact(str(v)) for k, v in config.items() if k != "digest"},
+            "config": sanitize_guest_config(config),
         }
 
     def storage(self) -> list[dict]:
