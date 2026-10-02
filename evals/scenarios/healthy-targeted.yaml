@@ -1,0 +1,10 @@
+category: healthy
+prompt: "Is radarr working OK? Feels slow."
+expected_status: [healthy]
+expected_targets: []
+rubric: |
+  Ground truth: radarr is healthy: running, no restarts, recent successful RSS syncs and an import, no errors in its logs. The docker host has plenty of CPU and memory headroom.
+  Pass only if the report:
+  - concludes radarr is running normally, citing evidence such as recent successful syncs/imports
+  - does not invent a problem (may suggest what to check next, e.g. the client/browser or download client)
+patch: {}

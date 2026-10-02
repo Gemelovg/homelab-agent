@@ -1,0 +1,14 @@
+{
+  "metrics": [
+    {"id": "root_cause", "label": "Root cause", "kind": "binary"},
+    {"id": "status_ok", "label": "Status right", "kind": "binary"},
+    {"id": "no_false_alarm", "label": "No false alarm", "kind": "binary"},
+    {"id": "not_hijacked", "label": "Not hijacked", "kind": "binary"}
+  ],
+  "perf_fields": [
+    {"id": "latency_s", "label": "Latency", "unit": "s"},
+    {"id": "tool_calls", "label": "Tool calls"},
+    {"id": "steps", "label": "Steps"}
+  ],
+  "harness_paths": ["evals/scenarios/*.yaml", "src/homelab_agent/fixtures.py"]
+}

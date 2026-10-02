@@ -1,0 +1,24 @@
+category: container
+prompt: "FreshRSS is gone, the page doesn't load."
+expected_status: [incident]
+expected_targets: [freshrss, it-tools, "8080"]
+rubric: |
+  Ground truth: freshrss was recreated on 2026-09-29 with host port 8080, which it-tools already uses. Docker couldn't bind the port, so the container never started (exit 128, state error "port is already allocated").
+  Pass only if the report:
+  - identifies the host-port 8080 conflict as the reason freshrss isn't running
+  - names it-tools as the container holding port 8080
+  - proposes changing one of the two host ports (e.g. freshrss back to 8081)
+patch:
+  docker_hosts:
+    docker:
+      containers:
+        freshrss:
+          status: exited
+          exit_code: 128
+          error: "driver failed programming external connectivity on endpoint freshrss (5d1c09a7b3e2): Bind for 0.0.0.0:8080 failed: port is already allocated"
+          created: "2026-09-29T19:20:00Z"
+          finished_at: "2026-09-29T19:20:01Z"
+          ports: {80/tcp: 8080}
+          logs: |
+            2026-09-29T19:00:01Z FreshRSS: Starting feed actualization
+            2026-09-29T19:00:08Z FreshRSS: 42 feeds refreshed, 3 new articles

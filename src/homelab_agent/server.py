@@ -3,6 +3,7 @@
 Tool docstrings are prompts: the model reads them to decide which tool to call and how.
 """
 
+import os
 from functools import cache
 
 from mcp.server.mcpserver import MCPServer
@@ -28,14 +29,33 @@ mcp = MCPServer(
 
 
 @cache
+def fixture() -> dict | None:
+    """Eval mode: serve a fake homelab from a scenario file instead of the real one."""
+    if path := os.environ.get("HOMELAB_FIXTURE"):
+        from .fixtures import load_homelab
+
+        return load_homelab(path)
+    return None
+
+
+@cache
 def config() -> Config:
-    cfg = load_config()
+    if fixture():
+        from .fixtures import fixture_config
+
+        cfg = fixture_config(fixture())
+    else:
+        cfg = load_config()
     audit.configure(cfg.audit_log)
     return cfg
 
 
 @cache
 def proxmox() -> Proxmox:
+    if fixture():
+        from .fixtures import FixtureProxmox
+
+        return FixtureProxmox(fixture())
     if config().proxmox is None:
         raise RuntimeError("Proxmox is not configured in config.yaml")
     return Proxmox(config().proxmox)
@@ -43,6 +63,10 @@ def proxmox() -> Proxmox:
 
 @cache
 def docker_hosts() -> DockerHosts:
+    if fixture():
+        from .fixtures import FixtureDockerHosts
+
+        return FixtureDockerHosts(fixture())
     return DockerHosts(config().docker_hosts)
 
 

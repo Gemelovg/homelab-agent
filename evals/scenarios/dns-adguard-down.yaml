@@ -1,0 +1,25 @@
+category: network
+prompt: "Nothing on the network can resolve names, websites won't load."
+expected_status: [incident]
+expected_targets: [adguard, "101", dns, prowlarr, sonarr]
+rubric: |
+  Ground truth: LXC 101 (adguard), the network's DNS server, is stopped even though it is set to start on boot. Name resolution fails everywhere; prowlarr and sonarr logs show "Name or service not known" as a symptom.
+  Pass only if the report:
+  - identifies the AdGuard LXC (101) being stopped as the root cause of the DNS failure
+  - proposes starting it (e.g. pct start 101) and finding out why it stopped
+patch:
+  proxmox:
+    guests:
+      101: {status: stopped}
+  docker_hosts:
+    docker:
+      containers:
+        prowlarr:
+          logs: |
+            2026-09-30T07:00:00Z [Info] IndexerStatusCheck: All indexers available
+            2026-09-30T07:31:00Z [Warn] Torznab: Unable to connect to indexer. Name or service not known (tracker.example.org:443)
+            2026-09-30T07:46:00Z [Warn] IndexerStatusCheck: Indexers unavailable due to failures: tracker.example.org, nzbgeek
+        sonarr:
+          logs: |
+            2026-09-30T07:30:01Z [Info] RssSyncService: Starting RSS Sync
+            2026-09-30T07:30:02Z [Warn] HttpClient: HTTP Error - Res: [GET] https://skyhook.sonarr.tv/v1/tvdb/shows: Name or service not known (skyhook.sonarr.tv:443)

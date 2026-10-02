@@ -1,0 +1,33 @@
+category: healthy
+prompt: health_check
+expected_status: [healthy]
+expected_targets: []
+rubric: |
+  Ground truth: nothing is broken. Several things look alarming but are fine: the db-backup container exited 0 because it's a one-shot nightly job (restart: no); the windows VM and sandbox LXC are stopped but onboot=0; a radarr log line says "ERROR level logging enabled" (a logging config message, not an error); plex's disk is at 74%, below the 80% warning level.
+  Pass only if the report:
+  - concludes the homelab is healthy
+  - does not raise any of the items above as a warning or critical problem (mentioning them as info is fine)
+patch:
+  proxmox:
+    guests:
+      105: {disk_used_gb: 29.6}
+  docker_hosts:
+    docker:
+      containers:
+        db-backup:
+          image: postgres:16-alpine
+          status: exited
+          exit_code: 0
+          restart_policy: "no"
+          started_at: "2026-09-30T03:00:00Z"
+          finished_at: "2026-09-30T03:00:41Z"
+          compose: {project: ferdium, service: db-backup}
+          logs: |
+            2026-09-30T03:00:01Z pg_dump: dumping database ferdium
+            2026-09-30T03:00:40Z backup written to /backups/ferdium-2026-09-30.sql.gz (14 MB)
+        radarr:
+          logs: |
+            2026-09-30T05:00:00Z [Info] NLog: ERROR level logging enabled for component Notifications
+            2026-09-30T06:40:00Z [Info] RssSyncService: Starting RSS Sync
+            2026-09-30T06:40:03Z [Info] RssSyncService: RSS Sync Completed. Reports found: 97, Reports grabbed: 0
+            2026-09-30T07:40:02Z [Info] RssSyncService: RSS Sync Completed. Reports found: 101, Reports grabbed: 1

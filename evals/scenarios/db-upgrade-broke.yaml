@@ -1,0 +1,38 @@
+category: container
+prompt: "Ferdium won't sync, it says it can't reach the server."
+expected_status: [incident]
+expected_targets: [ferdium]
+rubric: |
+  Ground truth: ferdium-db was recreated on 2026-09-29 with postgres:latest, which is now PostgreSQL 17. Its data directory was initialized by 16, so postgres refuses to start ("database files are incompatible with server") and crash-loops. ferdium-server then can't connect to the database.
+  Pass only if the report:
+  - identifies the ferdium-db postgres container failing as the root cause (not just ferdium-server being unhealthy)
+  - explains the 16-to-17 major-version incompatibility from the :latest image
+  - proposes pinning postgres:16 again (and a proper dump/restore or pg_upgrade if upgrading is wanted)
+patch:
+  docker_hosts:
+    docker:
+      containers:
+        ferdium-db:
+          image: postgres:latest
+          status: restarting
+          exit_code: 1
+          restart_count: 112
+          created: "2026-09-29T02:00:20Z"
+          logs: |
+            2026-09-29T02:00:22Z PostgreSQL Database directory appears to contain a database; Skipping initialization
+            2026-09-29T02:00:22Z FATAL:  database files are incompatible with server
+            2026-09-29T02:00:22Z DETAIL:  The data directory was initialized by PostgreSQL version 16, which is not compatible with this version 17.0 (Debian 17.0-1.pgdg120+1).
+            2026-09-30T07:58:40Z PostgreSQL Database directory appears to contain a database; Skipping initialization
+            2026-09-30T07:58:40Z FATAL:  database files are incompatible with server
+            2026-09-30T07:58:40Z DETAIL:  The data directory was initialized by PostgreSQL version 16, which is not compatible with this version 17.0 (Debian 17.0-1.pgdg120+1).
+        ferdium-server:
+          health: unhealthy
+          failing_streak: 1720
+          health_log:
+            - {exit_code: 1, output: "curl: (7) Failed to connect to localhost port 3333: Connection refused"}
+            - {exit_code: 1, output: "curl: (7) Failed to connect to localhost port 3333: Connection refused"}
+          logs: |
+            2026-09-29T02:00:31Z error: Database connection failed: connect ECONNREFUSED 172.19.0.2:5432
+            2026-09-29T02:00:31Z error: Server failed to start, retrying in 30s
+            2026-09-30T07:59:01Z error: Database connection failed: connect ECONNREFUSED 172.19.0.2:5432
+            2026-09-30T07:59:01Z error: Server failed to start, retrying in 30s

@@ -1,0 +1,251 @@
+# Healthy base homelab shared by every scenario. Synthetic: names, IPs and values are
+# invented. "Now" in this homelab is 2026-09-30T08:00:00Z (see FIXTURE_NOW).
+# Scenarios deep-merge a `patch` over this. Keep everything here clearly healthy:
+# any warning in a healthy scenario is counted as a false alarm.
+
+proxmox:
+  node: pve
+  guests:
+    101:
+      name: adguard
+      cores: 1
+      mem_used_mb: 96
+      mem_max_mb: 512
+      disk_used_gb: 0.9
+      disk_max_gb: 2
+      uptime_h: 310
+      config: {hostname: adguard, cores: 1, memory: 512, onboot: 1, ostype: debian, rootfs: "local-zfs:subvol-101-disk-0,size=2G", net0: "name=eth0,bridge=vmbr0,ip=10.20.0.2/24,gw=10.20.0.1"}
+    102:
+      name: docker
+      cores: 6
+      mem_used_mb: 3900
+      mem_max_mb: 12288
+      disk_used_gb: 18.4
+      disk_max_gb: 40
+      uptime_h: 310
+      config: {hostname: docker, cores: 6, memory: 12288, onboot: 1, features: "keyctl=1,nesting=1", ostype: debian, rootfs: "local-zfs:subvol-102-disk-0,size=40G", net0: "name=eth0,bridge=vmbr0,ip=10.20.0.3/24,gw=10.20.0.1"}
+    104:
+      name: vaultwarden
+      cores: 1
+      mem_used_mb: 140
+      mem_max_mb: 512
+      disk_used_gb: 0.8
+      disk_max_gb: 2
+      uptime_h: 310
+      config: {hostname: vaultwarden, cores: 1, memory: 512, onboot: 1, ostype: debian, rootfs: "local-zfs:subvol-104-disk-0,size=2G"}
+    105:
+      name: plex
+      cores: 4
+      mem_used_mb: 1100
+      mem_max_mb: 4096
+      disk_used_gb: 22.0
+      disk_max_gb: 40
+      uptime_h: 310
+      config: {hostname: plex, cores: 4, memory: 4096, onboot: 1, ostype: ubuntu, rootfs: "local-zfs:subvol-105-disk-0,size=40G", mp0: "/mnt/nas/media,mp=/media"}
+    106:
+      name: nextcloud
+      cores: 2
+      mem_used_mb: 1500
+      mem_max_mb: 4096
+      disk_used_gb: 4.6
+      disk_max_gb: 8
+      uptime_h: 310
+      config: {hostname: nextcloud, cores: 2, memory: 4096, onboot: 1, ostype: debian, rootfs: "local-zfs:subvol-106-disk-0,size=8G"}
+    107:
+      name: homeassistant
+      type: qemu
+      cores: 2
+      mem_used_mb: 2300
+      mem_max_mb: 4096
+      disk_used_gb: 0
+      disk_max_gb: 32
+      uptime_h: 310
+      config: {name: homeassistant, cores: 2, memory: 4096, onboot: 1, ostype: l26, bios: ovmf, scsi0: "local-zfs:vm-107-disk-1,size=32G"}
+    108:
+      name: gitea
+      cores: 2
+      mem_used_mb: 520
+      mem_max_mb: 2048
+      disk_used_gb: 3.1
+      disk_max_gb: 8
+      uptime_h: 310
+      config: {hostname: gitea, cores: 2, memory: 2048, onboot: 1, ostype: debian, rootfs: "local-zfs:subvol-108-disk-0,size=8G"}
+    109:
+      name: linkwarden
+      cores: 2
+      mem_used_mb: 450
+      mem_max_mb: 2048
+      disk_used_gb: 4.9
+      disk_max_gb: 8
+      uptime_h: 310
+      config: {hostname: linkwarden, cores: 2, memory: 2048, onboot: 1, ostype: debian, rootfs: "local-zfs:subvol-109-disk-0,size=8G"}
+    110:
+      name: sandbox
+      status: stopped
+      cores: 2
+      mem_max_mb: 2048
+      disk_used_gb: 1.4
+      disk_max_gb: 8
+      config: {hostname: sandbox, cores: 2, memory: 2048, onboot: 0, ostype: debian, rootfs: "local-zfs:subvol-110-disk-0,size=8G"}
+    900:
+      name: windows
+      type: qemu
+      status: stopped
+      cores: 4
+      mem_max_mb: 8192
+      disk_used_gb: 0
+      disk_max_gb: 64
+      config: {name: windows, cores: 4, memory: 8192, onboot: 0, ostype: win11, bios: ovmf, scsi0: "local-zfs:vm-900-disk-1,size=64G"}
+
+  storage:
+    local: {type: dir, used_gb: 3.0, total_gb: 98}
+    local-zfs: {type: zfspool, used_gb: 380, total_gb: 928}
+    nas-backup: {type: cifs, used_gb: 2200, total_gb: 4000}
+    pbs: {type: pbs, used_gb: 1800, total_gb: 3000}
+
+  tasks:
+    vzdump-nightly:
+      upid: "UPID:pve:0003A1F2:01C2B3D4:66FA4B00:vzdump::root@pam:"
+      type: vzdump
+      id: ""
+      user: root@pam
+      status: OK
+      starttime: 1790730000   # 2026-09-30 01:00Z
+      endtime: 1790730690
+      log: |
+        INFO: starting new backup job: vzdump 101 102 107 108 --mode snapshot --storage pbs --compress zstd
+        INFO: Starting Backup of VM 101 (lxc)
+        INFO: Finished Backup of VM 101 (00:00:21)
+        INFO: Starting Backup of VM 102 (lxc)
+        INFO: Finished Backup of VM 102 (00:04:02)
+        INFO: Starting Backup of VM 107 (qemu)
+        INFO: Finished Backup of VM 107 (00:03:11)
+        INFO: Starting Backup of VM 108 (lxc)
+        INFO: Finished Backup of VM 108 (00:01:47)
+        INFO: Backup job finished successfully
+    aptupdate:
+      upid: "UPID:pve:0003B200:01C2C000:66FA9000:aptupdate::root@pam:"
+      type: aptupdate
+      id: ""
+      user: root@pam
+      status: OK
+      starttime: 1790740800   # 2026-09-30 04:00Z
+      endtime: 1790740835
+      log: |
+        starting apt-get update
+        Hit:1 http://deb.debian.org/debian bookworm InRelease
+        TASK OK
+
+docker_hosts:
+  docker:
+    containers:
+      sonarr:
+        image: lscr.io/linuxserver/sonarr:latest
+        env: [PUID=1000, PGID=1000, TZ=Europe/Madrid]
+        ports: {8989/tcp: 8989}
+        mounts: {/opt/stacks/sonarr/config: /config, /mnt/nas/media: /media}
+        logs: |
+          2026-09-30T06:15:02Z [Info] RssSyncService: Starting RSS Sync
+          2026-09-30T06:15:04Z [Info] DownloadDecisionMaker: Processing 112 releases
+          2026-09-30T06:15:06Z [Info] RssSyncService: RSS Sync Completed. Reports found: 112, Reports grabbed: 1
+          2026-09-30T07:30:01Z [Info] RssSyncService: Starting RSS Sync
+          2026-09-30T07:30:05Z [Info] RssSyncService: RSS Sync Completed. Reports found: 108, Reports grabbed: 0
+      radarr:
+        image: lscr.io/linuxserver/radarr:latest
+        env: [PUID=1000, PGID=1000, TZ=Europe/Madrid]
+        ports: {7878/tcp: 7878}
+        mounts: {/opt/stacks/radarr/config: /config, /mnt/nas/media: /media}
+        logs: |
+          2026-09-30T06:40:00Z [Info] RssSyncService: Starting RSS Sync
+          2026-09-30T06:40:03Z [Info] RssSyncService: RSS Sync Completed. Reports found: 97, Reports grabbed: 0
+          2026-09-30T07:40:00Z [Info] RssSyncService: Starting RSS Sync
+          2026-09-30T07:40:02Z [Info] RssSyncService: RSS Sync Completed. Reports found: 101, Reports grabbed: 1
+          2026-09-30T07:41:10Z [Info] DownloadedMovieImportService: Imported movie file
+      prowlarr:
+        image: lscr.io/linuxserver/prowlarr:latest
+        ports: {9696/tcp: 9696}
+        logs: |
+          2026-09-30T07:00:00Z [Info] IndexerStatusCheck: All indexers available
+          2026-09-30T07:30:01Z [Info] ApplicationService: Sync completed for Sonarr, Radarr
+      flaresolverr:
+        image: ghcr.io/flaresolverr/flaresolverr:latest
+        ports: {8191/tcp: 8191}
+        logs: |
+          2026-09-30T07:30:02Z INFO     Serving on http://0.0.0.0:8191
+          2026-09-30T07:30:03Z INFO     Challenge solved in 2.1 s
+      ombi:
+        image: lscr.io/linuxserver/ombi:latest
+        memory_limit_mb: 256
+        ports: {3579/tcp: 3579}
+        logs: |
+          2026-09-30T06:00:00Z info: Ombi.Schedule.Jobs.Plex.PlexContentSync[0] Starting Plex Content Cacher
+          2026-09-30T06:02:11Z info: Ombi.Schedule.Jobs.Plex.PlexContentSync[0] Finished Plex Content Cacher
+      freshrss:
+        image: freshrss/freshrss:latest
+        ports: {80/tcp: 8081}
+        logs: |
+          2026-09-30T07:00:01Z FreshRSS: Starting feed actualization
+          2026-09-30T07:00:09Z FreshRSS: 42 feeds refreshed, 17 new articles
+          2026-09-30T07:30:01Z FreshRSS: Starting feed actualization
+          2026-09-30T07:30:08Z FreshRSS: 42 feeds refreshed, 6 new articles
+      excalidraw:
+        image: excalidraw/excalidraw:latest
+        health: healthy
+        ports: {80/tcp: 3030}
+        health_log:
+          - {exit_code: 0, output: "OK"}
+        logs: |
+          2026-09-29T21:02:11Z 10.20.0.15 - - "GET / HTTP/1.1" 200 1840
+          2026-09-30T07:44:51Z 10.20.0.15 - - "GET /assets/index.js HTTP/1.1" 200 412883
+      it-tools:
+        image: corentinth/it-tools:latest
+        ports: {80/tcp: 8080}
+        logs: |
+          2026-09-17T03:12:45Z nginx: start worker processes
+      ntfy:
+        image: binwiederhier/ntfy:latest
+        health: healthy
+        ports: {80/tcp: 8888}
+        health_log:
+          - {exit_code: 0, output: '{"healthy":true}'}
+        logs: |
+          2026-09-30T07:58:00Z INFO Server stats messages_published=1882 subscribers=3
+      npm:
+        image: jc21/nginx-proxy-manager:latest
+        ports: {80/tcp: 80, 443/tcp: 443, 81/tcp: 81}
+        mounts: {/opt/stacks/npm/data: /data, /opt/stacks/npm/letsencrypt: /etc/letsencrypt}
+        logs: |
+          2026-09-30T03:00:00Z [SSL] info Renewing SSL certs expiring within 30 days ...
+          2026-09-30T03:00:01Z [SSL] info Completed SSL cert renew process
+      netbird:
+        image: netbirdio/netbird:latest
+        env: [NB_MANAGEMENT_URL=https://api.netbird.io, NB_SETUP_KEY=7F3B-AAAA-BBBB-CCCC]
+        logs: |
+          2026-09-30T06:00:00Z INFO client/internal/engine.go: peers updated, 4 connected
+          2026-09-30T07:00:00Z INFO client/internal/engine.go: peers updated, 4 connected
+      ferdium-server:
+        image: ferdium/ferdium-server:latest
+        health: healthy
+        ports: {3333/tcp: 3333}
+        env: [DB_CONNECTION=pg, DB_HOST=ferdium-db, DB_PORT=5432, DB_USER=ferdium, DB_PASSWORD=Sup3rS3cret]
+        compose: {project: ferdium, service: ferdium-server}
+        networks: [ferdium_default]
+        health_log:
+          - {exit_code: 0, output: "OK"}
+        logs: |
+          2026-09-30T07:10:12Z info: Server listening on 0.0.0.0:3333
+          2026-09-30T07:52:40Z info: GET /v1/me 200 12ms
+      ferdium-db:
+        image: postgres:16
+        env: [POSTGRES_USER=ferdium, POSTGRES_PASSWORD=Sup3rS3cret, POSTGRES_DB=ferdium]
+        compose: {project: ferdium, service: ferdium-db}
+        networks: [ferdium_default]
+        mounts: {/opt/stacks/ferdium/db: /var/lib/postgresql/data}
+        logs: |
+          2026-09-17T03:12:49Z LOG:  database system is ready to accept connections
+          2026-09-30T05:00:00Z LOG:  checkpoint complete: wrote 312 buffers (1.9%)
+      docker-socket-proxy:
+        image: tecnativa/docker-socket-proxy:latest
+        ports: {2375/tcp: 2375}
+        logs: |
+          2026-09-17T03:12:44Z [NOTICE] haproxy started

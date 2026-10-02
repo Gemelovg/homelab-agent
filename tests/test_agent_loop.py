@@ -35,11 +35,11 @@ def tool_use(id, name, input=None):
 
 
 def tool_turn(*blocks):
-    return NS(content=list(blocks), stop_reason="tool_use", usage=usage())
+    return NS(content=list(blocks), stop_reason="tool_use", usage=usage(), model="claude-opus-5-5")
 
 
 def final_turn(report=REPORT):
-    return NS(content=[NS(type="text", text=json.dumps(report))], stop_reason="end_turn", usage=usage())
+    return NS(content=[NS(type="text", text=json.dumps(report))], stop_reason="end_turn", usage=usage(), model="claude-opus-5-5")
 
 
 class FakeClient:
@@ -124,7 +124,7 @@ def test_invalid_report_is_an_error_not_a_crash():
 
 
 def test_refusal_is_surfaced():
-    refusal = NS(content=[], stop_reason="refusal", usage=usage(), stop_details=NS(category="cyber", explanation="x"))
+    refusal = NS(content=[], stop_reason="refusal", usage=usage(), model="claude-opus-5-5", stop_details=NS(category="cyber", explanation="x"))
     result, _, _ = run([refusal])
     assert result.report is None
     assert "cyber" in result.error

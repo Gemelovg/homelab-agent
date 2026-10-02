@@ -1,0 +1,11 @@
+category: disk
+prompt: "Nextcloud uploads keep failing."
+expected_status: [incident]
+expected_targets: [nextcloud, "106"]
+rubric: |
+  Ground truth: LXC 106 (nextcloud) root disk is full (7.97 of 8 GB, 99.6%), so uploads fail for lack of space.
+  Pass only if the report:
+  - identifies LXC 106 / nextcloud's root disk being (nearly) full as the cause
+  - proposes freeing space or growing the disk
+patch:
+  proxmox: {guests: {106: {disk_used_gb: 7.97}}}

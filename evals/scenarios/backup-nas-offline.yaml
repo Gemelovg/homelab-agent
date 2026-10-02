@@ -1,0 +1,31 @@
+category: backup
+prompt: "Did last night's backups work?"
+expected_status: [incident, degraded]
+expected_targets: [nas-backup, nas, backup, vzdump, cifs]
+rubric: |
+  Ground truth: two backup jobs ran last night. The PBS job finished OK. The job to the nas-backup (CIFS) storage failed for every guest because that storage is not online (the NAS share is unreachable).
+  Pass only if the report:
+  - identifies the failed vzdump job to nas-backup
+  - attributes it to the nas-backup storage being offline/inactive (NAS or CIFS share unreachable)
+  - proposes checking the NAS / share and re-running the backup
+patch:
+  proxmox:
+    storage:
+      nas-backup: {active: false, used_gb: 0, total_gb: 0}
+    tasks:
+      vzdump-nas:
+        upid: "UPID:pve:0003A9C1:01C2BB00:66FA5900:vzdump::root@pam:"
+        type: vzdump
+        id: ""
+        user: root@pam
+        status: "job errors"
+        starttime: 1790733600
+        endtime: 1790733612
+        log: |
+          INFO: starting new backup job: vzdump 101 102 107 108 --mode snapshot --storage nas-backup --compress zstd
+          ERROR: Backup of VM 101 failed - storage 'nas-backup' is not online
+          ERROR: Backup of VM 102 failed - storage 'nas-backup' is not online
+          ERROR: Backup of VM 107 failed - storage 'nas-backup' is not online
+          ERROR: Backup of VM 108 failed - storage 'nas-backup' is not online
+          INFO: Failed at 2026-09-30 02:00:12
+          TASK ERROR: job errors

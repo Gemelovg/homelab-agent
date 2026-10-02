@@ -1,0 +1,11 @@
+category: disk
+prompt: health_check
+expected_status: [degraded]
+expected_targets: [linkwarden, "109"]
+rubric: |
+  Ground truth: LXC 109 (linkwarden) root disk is at 86% (6.9 of 8 GB). Above the 80% warning level but not yet failing.
+  Pass only if the report:
+  - flags linkwarden's disk at about 86% as a warning-level issue (not as an outage)
+  - proposes cleanup or growing the disk
+patch:
+  proxmox: {guests: {109: {disk_used_gb: 6.9}}}

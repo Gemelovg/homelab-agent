@@ -53,3 +53,12 @@ def test_sanitize_pipeline_redacts_before_wrapping():
     out = sanitize_untrusted("c", "token=abc\nok", max_lines=10)
     assert "abc" not in out
     assert "<untrusted_data" in out
+
+
+def test_redact_env_catches_any_name_ending_in_key():
+    # Regression: NB_SETUP_KEY (NetBird) slipped through when only API_KEY-style names matched.
+    assert redact_env(["NB_SETUP_KEY=7F3B-AAAA", "KEY=x", "MONKEY=banana"]) == [
+        "NB_SETUP_KEY=[REDACTED]",
+        "KEY=[REDACTED]",
+        "MONKEY=banana",
+    ]

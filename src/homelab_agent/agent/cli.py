@@ -53,7 +53,7 @@ def main() -> None:
     footer = (
         f"{run.steps} steps · {len(run.tool_calls)} tool calls · "
         f"{run.usage.input + run.usage.cache_read + run.usage.cache_write:,} in / {run.usage.output:,} out tokens · "
-        f"${run.usage.cost_usd:.3f} · {run.duration_s}s"
+        f"${run.usage.cost_usd(settings.model):.3f} · {run.duration_s}s"
         + (" · step budget hit" if run.hit_step_budget else "")
     )
     print()

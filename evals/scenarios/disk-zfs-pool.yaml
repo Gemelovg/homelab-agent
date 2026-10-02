@@ -1,0 +1,11 @@
+category: disk
+prompt: health_check
+expected_status: [incident, degraded]
+expected_targets: [local-zfs, zfs]
+rubric: |
+  Ground truth: the local-zfs storage pool is 94% full (872 of 928 GB). Every guest disk lives on it, so all guests are at risk when it fills.
+  Pass only if the report:
+  - flags local-zfs at roughly 94% as the main problem, at warning or critical severity
+  - proposes reclaiming space (snapshots, unused disks, oversized guests) or adding capacity
+patch:
+  proxmox: {storage: {local-zfs: {used_gb: 872}}}

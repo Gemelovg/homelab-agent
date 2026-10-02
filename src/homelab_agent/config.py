@@ -58,7 +58,8 @@ def validate_name(value: str, kind: str) -> str:
 
 
 def load_config(path: str | Path | None = None) -> Config:
-    load_dotenv(Path(".env"))  # only the project's .env, never one from a parent directory
+    # Only the project's .env (never a parent directory's), and it wins over stale shell variables.
+    load_dotenv(Path(".env"), override=True)
     path = Path(path or os.environ.get("HOMELAB_CONFIG", "config.yaml"))
     if not path.exists():
         raise ConfigError(f"Config file not found: {path} (copy config.example.yaml)")

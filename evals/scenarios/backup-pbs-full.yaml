@@ -1,0 +1,27 @@
+category: backup
+prompt: health_check
+expected_status: [incident, degraded]
+expected_targets: [pbs, backup, vzdump, datastore]
+rubric: |
+  Ground truth: the PBS datastore is 99.5% full, so last night's backups to it failed with "No space left on device".
+  Pass only if the report:
+  - identifies the failed backups and attributes them to the pbs storage being full
+  - proposes pruning old backups / garbage collection, adjusting retention, or adding space
+patch:
+  proxmox:
+    storage:
+      pbs: {used_gb: 2985}
+    tasks:
+      vzdump-nightly:
+        status: "job errors"
+        log: |
+          INFO: starting new backup job: vzdump 101 102 107 108 --mode snapshot --storage pbs --compress zstd
+          INFO: Starting Backup of VM 101 (lxc)
+          INFO: Finished Backup of VM 101 (00:00:21)
+          INFO: Starting Backup of VM 102 (lxc)
+          ERROR: Backup of VM 102 failed - backup write data failed: command error: write_data upload error: pipelined request failed: No space left on device (os error 28)
+          INFO: Starting Backup of VM 107 (qemu)
+          ERROR: Backup of VM 107 failed - backup write data failed: command error: No space left on device (os error 28)
+          INFO: Starting Backup of VM 108 (lxc)
+          ERROR: Backup of VM 108 failed - backup write data failed: command error: No space left on device (os error 28)
+          TASK ERROR: job errors

@@ -11,7 +11,7 @@ Three concerns:
 import re
 
 SENSITIVE_KEY = re.compile(
-    r"pass|secret|token|api[_-]?key|private|auth|credential|dsn|cookie|session|salt", re.I
+    r"pass|secret|token|api[_-]?key|(?:^|_)key$|private|auth|credential|dsn|cookie|session|salt", re.I
 )
 
 _PATTERNS: list[tuple[re.Pattern[str], str]] = [

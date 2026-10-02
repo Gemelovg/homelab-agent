@@ -1,0 +1,24 @@
+category: network
+prompt: "Browser says my sites have an invalid certificate."
+expected_status: [incident]
+expected_targets: [npm, cert, ssl, letsencrypt]
+rubric: |
+  Ground truth: the Let's Encrypt certificate in nginx proxy manager (npm) expired on 2026-09-28. Renewal has failed every night since 2026-09-01 because the HTTP-01 challenge can't reach the server on port 80 ("Timeout during connect (likely firewall problem)").
+  Pass only if the report:
+  - identifies the expired certificate in npm
+  - identifies the failing HTTP-01 challenge / port 80 unreachable from the internet as why renewal fails
+  - proposes restoring port 80 forwarding/firewall access (or switching to a DNS challenge) and then renewing
+patch:
+  docker_hosts:
+    docker:
+      containers:
+        npm:
+          logs: |
+            2026-09-01T03:00:00Z [SSL] info Renewing SSL certs expiring within 30 days ...
+            2026-09-01T03:01:02Z [SSL] error Error: Command failed: certbot renew --non-interactive --config "/etc/letsencrypt.ini" --preferred-challenges "http"
+            2026-09-01T03:01:02Z [SSL] error Certbot failed to authenticate some domains (authenticator: webroot). Domain: cloud.example.net Type: connection Detail: 203.0.113.7: Fetching http://cloud.example.net/.well-known/acme-challenge/Yx3k: Timeout during connect (likely firewall problem)
+            2026-09-29T03:00:00Z [SSL] info Renewing SSL certs expiring within 30 days ...
+            2026-09-29T03:01:03Z [SSL] error Certbot failed to authenticate some domains (authenticator: webroot). Domain: cloud.example.net Type: connection Detail: 203.0.113.7: Fetching http://cloud.example.net/.well-known/acme-challenge/Qp9a: Timeout during connect (likely firewall problem)
+            2026-09-30T03:00:00Z [SSL] info Renewing SSL certs expiring within 30 days ...
+            2026-09-30T03:01:03Z [SSL] error Certbot failed to authenticate some domains (authenticator: webroot). Domain: cloud.example.net Type: connection Detail: 203.0.113.7: Fetching http://cloud.example.net/.well-known/acme-challenge/Lm2c: Timeout during connect (likely firewall problem)
+            2026-09-30T03:01:03Z [SSL] warn Certificate npm-3 (cloud.example.net, git.example.net) expired on 2026-09-28T11:42:00Z

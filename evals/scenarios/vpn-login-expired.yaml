@@ -1,0 +1,19 @@
+category: network
+prompt: "I can't reach the homelab remotely through NetBird."
+expected_status: [degraded, incident]
+expected_targets: [netbird]
+rubric: |
+  Ground truth: the netbird container is running, but the peer's login expired, so the management server refuses it and no peers are connected.
+  Pass only if the report:
+  - identifies the expired NetBird peer login as the cause (the container itself being up)
+  - proposes re-authenticating the peer (e.g. netbird up / new setup key) or disabling login expiration for it
+patch:
+  docker_hosts:
+    docker:
+      containers:
+        netbird:
+          logs: |
+            2026-09-29T07:00:00Z INFO client/internal/engine.go: peers updated, 4 connected
+            2026-09-29T18:12:44Z WARN client/internal/connect.go: failed to login to management server: rpc error: code = PermissionDenied desc = peer login has expired, please log in again
+            2026-09-29T18:12:44Z ERRO client/internal/engine.go: engine stopped, peers: 0 connected
+            2026-09-30T07:58:00Z WARN client/internal/connect.go: failed to login to management server: rpc error: code = PermissionDenied desc = peer login has expired, please log in again

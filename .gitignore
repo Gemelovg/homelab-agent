@@ -6,3 +6,9 @@ config.yaml
 audit.jsonl
 runs/
 mcp-server.log
+.claude/hillclimb/**/traces/
+.claude/hillclimb/**/report.html
+.claude/hillclimb/**/state.json
+.claude/hillclimb/**/trajectory/
+.DS_Store
+.claude/hillclimb/**/_harness_approved

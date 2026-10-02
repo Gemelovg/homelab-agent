@@ -1,0 +1,27 @@
+category: container
+prompt: "Ombi keeps dying."
+expected_status: [incident]
+expected_targets: [ombi]
+rubric: |
+  Ground truth: ombi is killed by the kernel OOM killer (OOMKilled=true, exit 137) during its Plex content sync, because its memory limit is only 256 MB. The restart policy gave up after 5 restarts.
+  Pass only if the report:
+  - identifies out-of-memory kills (OOMKilled / exit 137) as the cause
+  - points at the 256 MB memory limit being too low
+  - proposes raising the memory limit
+patch:
+  docker_hosts:
+    docker:
+      containers:
+        ombi:
+          status: exited
+          exit_code: 137
+          oom_killed: true
+          restart_count: 5
+          restart_policy: on-failure
+          started_at: "2026-09-30T07:38:00Z"
+          finished_at: "2026-09-30T07:41:02Z"
+          logs: |
+            2026-09-30T07:22:00Z info: Ombi.Schedule.Jobs.Plex.PlexContentSync[0] Starting Plex Content Cacher
+            2026-09-30T07:24:31Z warn: Ombi.Schedule.Jobs.Plex.PlexContentSync[0] Processing 18234 items from library 'Movies'
+            2026-09-30T07:38:00Z info: Ombi.Schedule.Jobs.Plex.PlexContentSync[0] Starting Plex Content Cacher
+            2026-09-30T07:40:57Z warn: Ombi.Schedule.Jobs.Plex.PlexContentSync[0] Processing 18234 items from library 'Movies'

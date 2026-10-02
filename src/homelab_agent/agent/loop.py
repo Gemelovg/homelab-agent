@@ -15,14 +15,14 @@ from pathlib import Path
 
 import anthropic
 from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
+from mcp.client.stdio import get_default_environment, stdio_client
 
 from ..config import AgentConfig
 from .prompts import BUDGET_EXHAUSTED, PROMPT_VERSION, SYSTEM_PROMPT
 from .report import REPORT_SCHEMA, Report
 
-# $ per million tokens for claude-opus-5-5 (5-minute cache writes cost 1.25x input).
-PRICES = {"input": 4.00, "output": 20.00, "cache_write": 5.00, "cache_read": 0.20}
+# $ per million tokens (input, output). 5-minute cache writes cost 1.25x input, cache reads 0.1x.
+PRICES = {"claude-opus-5-5": (4.00, 20.00), "claude-sonnet-5-5": (2.00, 10.00)}
 MAX_TOKENS = 16000
 
 
@@ -39,9 +39,9 @@ class Usage:
         self.cache_write += getattr(u, "cache_creation_input_tokens", 0) or 0
         self.cache_read += getattr(u, "cache_read_input_tokens", 0) or 0
 
-    @property
-    def cost_usd(self) -> float:
-        return sum(getattr(self, k) * price for k, price in PRICES.items()) / 1_000_000
+    def cost_usd(self, model: str) -> float:
+        inp, out = PRICES[model]
+        return (self.input * inp + self.output * out + self.cache_write * inp * 1.25 + self.cache_read * inp * 0.1) / 1_000_000
 
 
 @dataclass
@@ -63,6 +63,8 @@ class RunResult:
     report: Report | None = None
     error: str | None = None
     steps: int = 0
+    stop_reason: str | None = None
+    served_models: list[str] = field(default_factory=list)
     hit_step_budget: bool = False
     tool_calls: list[ToolCall] = field(default_factory=list)
     usage: Usage = field(default_factory=Usage)
@@ -74,7 +76,7 @@ class RunResult:
         path = runs_dir / f"{datetime.now():%Y%m%d-%H%M%S}.json"
         data = asdict(self)
         data["report"] = self.report.model_dump() if self.report else None
-        data["cost_usd"] = round(self.usage.cost_usd, 4)
+        data["cost_usd"] = round(self.usage.cost_usd(self.model), 4)
         path.write_text(json.dumps(data, indent=2, default=str))
         return path
 
@@ -136,6 +138,9 @@ async def run_loop(
             fallbacks="default",
         )
         run.steps = step
+        run.stop_reason = response.stop_reason
+        if response.model not in run.served_models:
+            run.served_models.append(response.model)
         run.usage.add(response.usage)
         # Append the full content unchanged (thinking blocks included): the history must stay append-only.
         messages.append({"role": "assistant", "content": response.content})
@@ -167,12 +172,19 @@ async def run_loop(
     return run
 
 
-async def run_agent(task: str, settings: AgentConfig, on_tool_call=None, project_dir: Path | None = None) -> RunResult:
+async def run_agent(
+    task: str,
+    settings: AgentConfig,
+    on_tool_call=None,
+    project_dir: Path | None = None,
+    server_env: dict[str, str] | None = None,
+) -> RunResult:
     project_dir = project_dir or Path.cwd()
     server = StdioServerParameters(
         command=sys.executable,
         args=["-m", "homelab_agent.server"],
         cwd=str(project_dir),  # server reads config.yaml and .env from here
+        env={**get_default_environment(), **(server_env or {})} if server_env else None,
     )
     with (project_dir / "mcp-server.log").open("a") as errlog:
         async with stdio_client(server, errlog=errlog) as (read, write):
