@@ -1,0 +1,17 @@
+# Copy to config.yaml (git-ignored). Secrets go in .env, not here.
+
+proxmox:
+  host: 192.168.1.10          # Proxmox host IP or hostname (port 8006 is implied)
+  user: agent@pve             # read-only user, see README "Proxmox setup"
+  token_name: mcp
+  verify_ssl: false           # true once you have a real cert on Proxmox
+
+# LXCs that run Docker. The name is what the agent uses; the URL is how we reach it.
+#   tcp://  -> docker-socket-proxy in the LXC (recommended: read-only enforced by the proxy)
+#   ssh://  -> SSH as a user in the docker group (works, but that user is root-equivalent)
+docker_hosts:
+  media: tcp://192.168.1.21:2375
+  apps: tcp://192.168.1.22:2375
+
+audit_log: audit.jsonl
+max_log_lines: 500
