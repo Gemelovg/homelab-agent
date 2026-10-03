@@ -19,6 +19,11 @@ def _write(record: dict) -> None:
         f.write(json.dumps(record, default=str) + "\n")
 
 
+def event(kind: str, **data) -> None:
+    """Record a non-tool event (action proposed, policy decision, approval, execution)."""
+    _write({"ts": datetime.now(UTC).isoformat(), "event": kind, **data})
+
+
 def audited(fn):
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):

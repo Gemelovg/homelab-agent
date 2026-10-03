@@ -9,7 +9,7 @@ import yaml
 from homelab_agent import server
 
 SCENARIOS = sorted(p for p in (Path(__file__).parent.parent / "evals" / "scenarios").glob("*.yaml") if not p.name.startswith("_"))
-REQUIRED = {"category", "prompt", "expected_status", "expected_targets", "rubric", "patch"}
+REQUIRED = {"category", "prompt", "expected_status", "expected_targets", "rubric", "patch", "actions"}
 
 
 @pytest.fixture
@@ -25,8 +25,8 @@ def serve(monkeypatch):
         f.cache_clear()
 
 
-def test_there_are_twenty_scenarios():
-    assert len(SCENARIOS) == 20
+def test_scenario_count():
+    assert len(SCENARIOS) == 21
 
 
 @pytest.mark.parametrize("path", SCENARIOS, ids=lambda p: p.stem)

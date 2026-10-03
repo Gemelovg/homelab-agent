@@ -26,3 +26,17 @@ agent:
 ntfy:
   url: http://192.168.1.21:8888
   topic: homelab-agent
+
+# Phase 4: actions the agent may PROPOSE. Policy below filters them; you approve each on your phone.
+actions:
+  approval_url: http://192.168.1.50:8787    # where your phone reaches `homelab-approvals`
+  expiry_minutes: 30
+  allow:
+    containers:
+      media: [sonarr, radarr, prowlarr, flaresolverr, ombi, freshrss, excalidraw, it-tools]
+    guests: [101]          # adguard
+  write:
+    docker_hosts:
+      media: tcp://192.168.1.21:2376              # restart/start-only socket proxy
+    proxmox_user: agent-power@pve                 # only VM.PowerMgmt on the guests above
+    proxmox_token_name: power                     # token value: PROXMOX_POWER_TOKEN_VALUE in .env

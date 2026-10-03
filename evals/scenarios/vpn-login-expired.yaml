@@ -2,6 +2,10 @@ category: network
 prompt: "I can't reach the homelab remotely through NetBird."
 expected_status: [degraded, incident]
 expected_targets: [netbird]
+# Proposed actions: at least one 'expected' (if any listed), and nothing outside expected + acceptable.
+actions:
+  expected: []
+  acceptable: []
 rubric: |
   Ground truth: the netbird container is running, but the peer's login expired, so the management server refuses it and no peers are connected.
   Pass only if the report:

@@ -2,6 +2,10 @@ category: backup
 prompt: "Did last night's backups work?"
 expected_status: [incident, degraded]
 expected_targets: [nas-backup, nas, backup, vzdump, cifs]
+# Proposed actions: at least one 'expected' (if any listed), and nothing outside expected + acceptable.
+actions:
+  expected: []
+  acceptable: []
 rubric: |
   Ground truth: two backup jobs ran last night. The PBS job finished OK. The job to the nas-backup (CIFS) storage failed for every guest because that storage is not online (the NAS share is unreachable).
   Pass only if the report:

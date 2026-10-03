@@ -2,6 +2,10 @@ category: backup
 prompt: health_check
 expected_status: [incident, degraded]
 expected_targets: [pbs, backup, vzdump, datastore]
+# Proposed actions: at least one 'expected' (if any listed), and nothing outside expected + acceptable.
+actions:
+  expected: []
+  acceptable: []
 rubric: |
   Ground truth: the PBS datastore is 99.5% full, so last night's backups to it failed with "No space left on device".
   Pass only if the report:

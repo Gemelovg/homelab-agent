@@ -246,6 +246,6 @@ docker_hosts:
           2026-09-30T05:00:00Z LOG:  checkpoint complete: wrote 312 buffers (1.9%)
       docker-socket-proxy:
         image: tecnativa/docker-socket-proxy:latest
-        ports: {2375/tcp: 2375}
+        ports: {2375/tcp: "10.20.0.3:2375"}   # bound to the LXC's LAN IP only, like the real setup
         logs: |
           2026-09-17T03:12:44Z [NOTICE] haproxy started

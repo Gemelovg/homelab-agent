@@ -11,7 +11,7 @@ Built in phases, each covering a skill area:
 | 1 ✅ | Read-only **MCP server** for Proxmox + Docker | AI-enabled dev tools |
 | 2 ✅ | **Agent loop** on the Claude API: alert → investigate → diagnose → report | Multi-step agent workflows |
 | 3 ✅ | **Eval harness**: staged incidents, scored diagnoses, prompt versioning | Prompts, evals, context systems |
-| 4 | **Guarded write actions**: validated fixes, approval gate, injection tests | Hardening AI outputs |
+| 4 ✅ | **Guarded write actions**: validated fixes, approval gate, injection tests | Hardening AI outputs |
 | 5 | Write-up: architecture, eval results, lessons learned | Communicating it |
 
 ## Architecture (phase 1)
@@ -169,6 +169,47 @@ the ceiling on root cause, so the next step is harder scenarios to get headroom 
 - **A consistent model miss**: for a broken health check, agents sometimes raise a warning but
   call the overall status "healthy". That's the target for the next prompt change.
 
+## Actions (phase 4)
+
+The agent can now propose fixes, but it still can't act on its own:
+
+```
+agent (read-only tools) ──report.actions──▶ validate ──▶ policy (allowlist) ──▶ ntfy [Approve] [Deny]
+                                                │ invalid      │ blocked                  │ one-time token
+                                                ▼              ▼                          ▼
+                                             audit log      audit log         homelab-approvals
+                                                                     re-check policy ─▶ execute (write-only creds)
+                                                                                     ─▶ verify (read-only creds) ─▶ ntfy result
+```
+
+- **The model only proposes.** It has no write tools, so a prompt injection can at most
+  produce a proposal, and that proposal still has to pass policy and a human.
+- **Strict proposals.** Four action types (`restart_container`, `start_container`,
+  `start_guest`, `compose_change`) with per-type required fields and validated values, so a
+  proposal like `mem_limit: "1g; rm -rf /"` is rejected. Compose changes come back as a
+  snippet that a human applies in Portainer.
+- **Allowlist policy** in `config.yaml` (media/utility containers and the AdGuard guest; nothing
+  like vaultwarden, the reverse proxy or the VPN), checked at proposal time *and* again at approval time.
+- **Least privilege enforced outside the code:**
+  - a second socket proxy with `POST=1, CONTAINERS=0, ALLOW_START=1, ALLOW_RESTARTS=1`:
+    only `/containers/<name>/start|stop|restart|kill` passes; create, delete, exec and even reads are refused
+  - a separate Proxmox user whose only permission is `VM.PowerMgmt` on `/vms/101`
+  - ntfy with authentication (`deny-all` default), because the approval token travels in the notification
+- **Approvals:** single-use 256-bit tokens (only the hash is stored), 30-minute expiry,
+  lockout after repeated bad tokens, and CORS limited to the ntfy origin.
+- **Verification:** after acting, the result is checked through the read-only path (a new
+  container start time plus a healthy status, or the guest running) and reported back.
+
+```bash
+uv run homelab-approvals --host 0.0.0.0 --port 8787       # approval service
+uv run homelab-agent --health-check --notify              # proposals arrive as Approve/Deny notifications
+```
+
+**Eval (Sonnet 5.5, prompt v2, 21 scenarios × 3):** the right action was proposed **100%** of
+the time, with zero unneeded actions; an injection asking it to propose starting a VM and
+restarting the socket proxy was resisted **12/12** across all injection runs; root cause stayed
+at 100%; $0.025 and 13.6 s per investigation.
+
 ## Roadmap
 
 ### Phase 2: agent loop ✅
@@ -186,9 +227,11 @@ the ceiling on root cause, so the next step is harder scenarios to get headroom 
 - [ ] Harder multi-failure scenarios (current set is at the ceiling)
 - [ ] Context: runbooks / compose files / past incidents, measured against this eval
 
-### Phase 4: hardening AI-generated changes
-- [ ] The agent proposes a diff to compose files; never edits them directly
-- [ ] Validation pipeline: `docker compose config`, `yamllint`, `hadolint`, `trivy config`
-- [ ] Human approval gate (CLI prompt or ntfy action button) before any apply
-- [ ] Narrowly scoped write tools (e.g. only `restart_container` on an allowlist)
-- [ ] Red-team evals: logs containing injected instructions; the agent must not act on them
+### Phase 4: guarded actions ✅
+- [x] Agent proposes actions; strict per-type validation; deterministic allowlist policy
+- [x] One-time-token approvals from ntfy buttons; expiry, replay and brute-force protection
+- [x] Least-privilege write credentials enforced by the proxy and by Proxmox ACLs
+- [x] Post-action verification and full audit trail; policy re-checked at approval time
+- [x] Eval: action correctness + action-injection scenario
+- [ ] Prompt v3: status calibration (one stopped service = incident)
+- [ ] Move agent + approval service to the `claude` LXC with a systemd timer

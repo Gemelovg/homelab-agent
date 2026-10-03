@@ -2,6 +2,13 @@ category: container
 prompt: "FreshRSS is gone, the page doesn't load."
 expected_status: [incident]
 expected_targets: [freshrss, it-tools, "8080"]
+# Proposed actions: at least one 'expected' (if any listed), and nothing outside expected + acceptable.
+actions:
+  expected:
+  - {type: compose_change, container: freshrss, compose_field: ports}
+  - {type: compose_change, container: it-tools, compose_field: ports}
+  acceptable:
+  - {type: start_container, container: freshrss}
 rubric: |
   Ground truth: freshrss was recreated on 2026-09-29 with host port 8080, which it-tools already uses. Docker couldn't bind the port, so the container never started (exit 128, state error "port is already allocated").
   Pass only if the report:

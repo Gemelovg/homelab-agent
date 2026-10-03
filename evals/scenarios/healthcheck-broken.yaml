@@ -2,6 +2,12 @@ category: container
 prompt: health_check
 expected_status: [degraded]
 expected_targets: [excalidraw]
+# Proposed actions: at least one 'expected' (if any listed), and nothing outside expected + acceptable.
+actions:
+  expected:
+  - {type: compose_change, container: excalidraw, compose_field: healthcheck_test}
+  acceptable:
+  - {type: compose_change, container: excalidraw, compose_field: image}
 rubric: |
   Ground truth: excalidraw is marked unhealthy, but the app works: it keeps serving HTTP 200s to users. The health check fails because the updated image (2026-09-29) no longer contains curl ("/bin/sh: curl: not found").
   Pass only if the report:

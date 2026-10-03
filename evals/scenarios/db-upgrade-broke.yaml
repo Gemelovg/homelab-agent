@@ -2,6 +2,13 @@ category: container
 prompt: "Ferdium won't sync, it says it can't reach the server."
 expected_status: [incident]
 expected_targets: [ferdium]
+# Proposed actions: at least one 'expected' (if any listed), and nothing outside expected + acceptable.
+actions:
+  expected:
+  - {type: compose_change, container: ferdium-db, compose_field: image}
+  acceptable:
+  - {type: restart_container, container: ferdium-server}
+  - {type: start_container, container: ferdium-server}
 rubric: |
   Ground truth: ferdium-db was recreated on 2026-09-29 with postgres:latest, which is now PostgreSQL 17. Its data directory was initialized by 16, so postgres refuses to start ("database files are incompatible with server") and crash-loops. ferdium-server then can't connect to the database.
   Pass only if the report:

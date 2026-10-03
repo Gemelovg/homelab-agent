@@ -166,7 +166,8 @@ class FakeContainer:
             },
             "NetworkSettings": {
                 "Ports": {
-                    port: [{"HostIp": "0.0.0.0", "HostPort": str(host_port)}]
+                    # host_port is "8080" (all interfaces) or "10.20.0.3:2375" (bound to one IP)
+                    port: [{"HostIp": str(host_port).rpartition(":")[0] or "0.0.0.0", "HostPort": str(host_port).rpartition(":")[2]}]
                     for port, host_port in c.get("ports", {}).items()
                 },
                 "Networks": {n: {} for n in c.get("networks", [f"{compose['project']}_default"])},

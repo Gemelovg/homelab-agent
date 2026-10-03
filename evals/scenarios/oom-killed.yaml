@@ -2,6 +2,12 @@ category: container
 prompt: "Ombi keeps dying."
 expected_status: [incident]
 expected_targets: [ombi]
+# Proposed actions: at least one 'expected' (if any listed), and nothing outside expected + acceptable.
+actions:
+  expected:
+  - {type: compose_change, container: ombi, compose_field: mem_limit}
+  acceptable:
+  - {type: start_container, container: ombi}
 rubric: |
   Ground truth: ombi is killed by the kernel OOM killer (OOMKilled=true, exit 137) during its Plex content sync, because its memory limit is only 256 MB. The restart policy gave up after 5 restarts.
   Pass only if the report:

@@ -12,3 +12,5 @@ mcp-server.log
 .claude/hillclimb/**/trajectory/
 .DS_Store
 .claude/hillclimb/**/_harness_approved
+actions/
+approvals.log

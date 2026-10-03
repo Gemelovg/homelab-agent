@@ -66,6 +66,14 @@ def main() -> None:
     if args.notify and run.report:
         notify.send(cfg.ntfy, run.report, footer)
         print("Sent to ntfy.", file=sys.stderr)
+        if run.report.actions and cfg.actions:
+            from .. import audit
+            from ..actions.dispatch import dispatch
+            from ..docker_hosts import DockerHosts
+
+            audit.configure(cfg.audit_log)
+            for line in dispatch(run.report, cfg, DockerHosts(cfg.docker_hosts)):
+                print(line, file=sys.stderr)
     sys.exit(0 if run.report else 1)
 
 

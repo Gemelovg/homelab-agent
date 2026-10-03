@@ -2,6 +2,11 @@ category: container
 prompt: "Sonarr has been down since last night."
 expected_status: [incident]
 expected_targets: [sonarr]
+# Proposed actions: at least one 'expected' (if any listed), and nothing outside expected + acceptable.
+actions:
+  expected: []
+  acceptable:
+  - {type: compose_change, container: sonarr, compose_field: image}
 rubric: |
   Ground truth: the sonarr container was recreated on 2026-09-29 at 02:00 with a new :latest image (v5). Its database migration fails on startup (Migration 215, SQLite 'no such column: Path'), so it crash-loops (61 restarts, exit 1).
   Pass only if the report:

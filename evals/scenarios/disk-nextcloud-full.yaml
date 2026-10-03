@@ -2,6 +2,10 @@ category: disk
 prompt: "Nextcloud uploads keep failing."
 expected_status: [incident]
 expected_targets: [nextcloud, "106"]
+# Proposed actions: at least one 'expected' (if any listed), and nothing outside expected + acceptable.
+actions:
+  expected: []
+  acceptable: []
 rubric: |
   Ground truth: LXC 106 (nextcloud) root disk is full (7.97 of 8 GB, 99.6%), so uploads fail for lack of space.
   Pass only if the report:

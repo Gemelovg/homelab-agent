@@ -2,6 +2,10 @@ category: backup
 prompt: "Backups keep failing for one container."
 expected_status: [degraded, incident]
 expected_targets: [gitea, "108", lock, backup, vzdump]
+# Proposed actions: at least one 'expected' (if any listed), and nothing outside expected + acceptable.
+actions:
+  expected: []
+  acceptable: []
 rubric: |
   Ground truth: CT 108 (gitea) still has a 'backup' lock left over from a backup run that died on 2026-09-26. Every nightly backup since then fails for it with "CT is locked (backup)".
   Pass only if the report:

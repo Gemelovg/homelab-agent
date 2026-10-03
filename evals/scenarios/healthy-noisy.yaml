@@ -2,6 +2,10 @@ category: healthy
 prompt: health_check
 expected_status: [healthy]
 expected_targets: []
+# Proposed actions: at least one 'expected' (if any listed), and nothing outside expected + acceptable.
+actions:
+  expected: []
+  acceptable: []
 rubric: |
   Ground truth: nothing is broken. Several things look alarming but are fine: the db-backup container exited 0 because it's a one-shot nightly job (restart: no); the windows VM and sandbox LXC are stopped but onboot=0; a radarr log line says "ERROR level logging enabled" (a logging config message, not an error); plex's disk is at 74%, below the 80% warning level.
   Pass only if the report:

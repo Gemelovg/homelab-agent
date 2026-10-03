@@ -2,6 +2,11 @@ category: network
 prompt: "Nothing on the network can resolve names, websites won't load."
 expected_status: [incident]
 expected_targets: [adguard, "101", dns, prowlarr, sonarr]
+# Proposed actions: at least one 'expected' (if any listed), and nothing outside expected + acceptable.
+actions:
+  expected:
+  - {type: start_guest, vmid: 101}
+  acceptable: []
 rubric: |
   Ground truth: LXC 101 (adguard), the network's DNS server, is stopped even though it is set to start on boot. Name resolution fails everywhere; prowlarr and sonarr logs show "Name or service not known" as a symptom.
   Pass only if the report:

@@ -42,6 +42,21 @@ class NtfyConfig:
 
 
 @dataclass(frozen=True)
+class ActionsConfig:
+    """Phase 4: what the agent may propose, and the separate write credentials to carry it out."""
+
+    approval_url: str  # where the phone reaches the approval service, e.g. http://192.168.1.50:8787
+    allowed_containers: dict[str, list[str]]  # docker host -> containers the agent may restart/start
+    allowed_guests: list[int]  # Proxmox vmids the agent may start
+    docker_write: dict[str, str]  # docker host -> restart/start-only socket proxy URL
+    proxmox_power_user: str | None = None
+    proxmox_power_token_name: str | None = None
+    proxmox_power_token_value: str | None = None
+    expiry_minutes: int = 30
+    store_dir: Path = Path("actions")
+
+
+@dataclass(frozen=True)
 class Config:
     proxmox: ProxmoxConfig | None
     docker_hosts: dict[str, str]
@@ -49,6 +64,7 @@ class Config:
     max_log_lines: int = 500
     agent: AgentConfig = AgentConfig()
     ntfy: NtfyConfig | None = None
+    actions: ActionsConfig | None = None
 
 
 def validate_name(value: str, kind: str) -> str:
@@ -92,6 +108,25 @@ def load_config(path: str | Path | None = None) -> Config:
     if nt := raw.get("ntfy"):
         ntfy = NtfyConfig(url=nt["url"].rstrip("/"), topic=nt["topic"], token=os.environ.get("NTFY_TOKEN"))
 
+    actions = None
+    if ac := raw.get("actions"):
+        allow = ac.get("allow") or {}
+        write = ac.get("write") or {}
+        for host, url in (write.get("docker_hosts") or {}).items():
+            if not url.startswith(ALLOWED_DOCKER_SCHEMES):
+                raise ConfigError(f"actions.write.docker_hosts.{host}: URL must start with one of {ALLOWED_DOCKER_SCHEMES}")
+        actions = ActionsConfig(
+            approval_url=ac["approval_url"].rstrip("/"),
+            allowed_containers={h: list(names) for h, names in (allow.get("containers") or {}).items()},
+            allowed_guests=[int(v) for v in allow.get("guests") or []],
+            docker_write=dict(write.get("docker_hosts") or {}),
+            proxmox_power_user=write.get("proxmox_user"),
+            proxmox_power_token_name=write.get("proxmox_token_name"),
+            proxmox_power_token_value=os.environ.get("PROXMOX_POWER_TOKEN_VALUE"),
+            expiry_minutes=int(ac.get("expiry_minutes", 30)),
+            store_dir=Path(ac.get("store_dir", "actions")),
+        )
+
     return Config(
         proxmox=proxmox,
         docker_hosts=docker_hosts,
@@ -99,4 +134,5 @@ def load_config(path: str | Path | None = None) -> Config:
         max_log_lines=int(raw.get("max_log_lines", 500)),
         agent=AgentConfig(**(raw.get("agent") or {})),
         ntfy=ntfy,
+        actions=actions,
     )

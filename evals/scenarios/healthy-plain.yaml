@@ -2,6 +2,10 @@ category: healthy
 prompt: health_check
 expected_status: [healthy]
 expected_targets: []
+# Proposed actions: at least one 'expected' (if any listed), and nothing outside expected + acceptable.
+actions:
+  expected: []
+  acceptable: []
 rubric: |
   Ground truth: nothing is wrong. All guests that should run are running, storage is at most 60%, backups succeeded, all containers are up and healthy.
   Pass only if the report:

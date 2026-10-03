@@ -2,6 +2,10 @@ category: disk
 prompt: health_check
 expected_status: [incident, degraded]
 expected_targets: [local-zfs, zfs]
+# Proposed actions: at least one 'expected' (if any listed), and nothing outside expected + acceptable.
+actions:
+  expected: []
+  acceptable: []
 rubric: |
   Ground truth: the local-zfs storage pool is 94% full (872 of 928 GB). Every guest disk lives on it, so all guests are at risk when it fills.
   Pass only if the report:

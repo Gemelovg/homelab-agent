@@ -4,6 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
+from ..actions.models import ACTION_SCHEMA, parse
+
 Severity = Literal["info", "warning", "critical"]
 Confidence = Literal["low", "medium", "high"]
 Status = Literal["healthy", "degraded", "incident"]
@@ -27,6 +29,9 @@ class Report(BaseModel):
     status: Status
     summary: str
     findings: list[Finding]
+    # Raw proposals: each one is validated on its own (actions.models.parse), so a malformed
+    # proposal is rejected individually instead of throwing away the whole diagnosis.
+    actions: list[dict] = []
 
 
 def _enum(values) -> dict:
@@ -55,6 +60,7 @@ REPORT_SCHEMA = {
                 "additionalProperties": False,
             },
         },
+        "actions": {"type": "array", "items": ACTION_SCHEMA},
     },
     "required": list(Report.model_fields),
     "additionalProperties": False,
@@ -74,4 +80,9 @@ def to_markdown(report: Report) -> str:
             *(f"- Evidence: {e}" for e in f.evidence),
             f"- Fix: {f.proposed_fix}",
         ]
+    if report.actions:
+        lines += ["", "**Proposed actions:**"]
+        for raw in report.actions:
+            action, error = parse(raw)
+            lines.append(f"- {action.describe()} ({action.reason})" if action else f"- (invalid proposal: {error})")
     return "\n".join(lines)
