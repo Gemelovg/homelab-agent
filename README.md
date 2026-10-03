@@ -4,6 +4,8 @@ An AI ops agent for a Proxmox homelab: it investigates incidents across LXC cont
 Docker services, explains the root cause, and proposes fixes. It never changes anything
 without approval.
 
+**📖 Read the write-up: [Building a safe AI ops agent for my homelab](docs/WRITEUP.md)** — the design, the eval results, and the bugs the project caught in itself.
+
 Built in phases, each covering a skill area:
 
 | Phase | What | Skill area |
