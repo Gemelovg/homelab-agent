@@ -170,6 +170,11 @@ at a logged rejection.
 I tested it live: an allowlisted restart executed and verified, and a proposal to restart
 Portainer was blocked before it ever reached my phone.
 
+![ntfy showing, bottom to top: the authenticated test message, the approval request with Approve and Deny buttons, and the verified "Done" result](images/ntfy-approval-flow.png)
+
+*The live test in ntfy, read bottom to top: auth confirmed, the approval request with its
+buttons, and the result reported back after the restart was verified.*
+
 ## What went wrong, and what it taught me
 
 The most useful part of the project was the bugs it caught in itself. Each one is fixed and has a
