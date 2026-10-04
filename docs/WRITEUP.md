@@ -17,8 +17,7 @@ every approval of a risky step were mine.
 
 ## Why I built it
 
-Job postings kept asking for four skills my resume didn't show, so I built one project that
-needs all four. I used my own homelab as the testbed: a real system I depend on, with real
+I self-host applications on my server. Sometimes things break, seem to be a good way to learn about agents and MCP. I used my own homelab as the testbed: a real system I depend on, with real
 failures, where a careless AI could actually break something.
 
 | What postings ask for | Where this project covers it |
